@@ -1,0 +1,12 @@
+for="digit1"><strong>Digit 3</strong>
+<label for="digit2"><strong>Digit 1</strong></label>
+<label for="digit3"><strong>Digit 2</strong>
+for="challenge">Please enter the <strong>last four digits</strong> from your <strong>home phone number</strong>:</label>
+
+ws.htmlResult.IndexOf(@"for=""digit1""")
+ws.htmlResult.Substring(ws.htmlResult.IndexOf("/", ws.htmlResult.IndexOf(@"for=""digit1""><"))-2,1)
+ws.htmlResult.IndexOf(@"for=""digit2""")
+ws.htmlResult.IndexOf(@"for=""digit3""")
+
+ws.htmlResult.Substring(ws.htmlResult.IndexOf("/", ws.htmlResult.IndexOf(@"for=""challenge"">"))-25,69).Replace("<strong>","").Replace("</strong>","")
+
