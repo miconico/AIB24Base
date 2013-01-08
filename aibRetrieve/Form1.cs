@@ -75,7 +75,7 @@ namespace aibRetrieve
             string sSpend = AIB24.sGetSpend(sSMS);
 
             // send email with compiled data
-            SendEmail.SendMessage("Budget", sSMS, "budget@aviva.ie", "miconico@gmail.com;mark.gavin@aviva.ie", "");
+            SendEmail.SendMessage("Budget", sSpend + Environment.NewLine + Environment.NewLine + sSMS, "budget@aviva.ie", "miconico@gmail.com;mark.gavin@aviva.ie", "");
 
             // Logout of AIB24
             AIB24.AIBLogout();
