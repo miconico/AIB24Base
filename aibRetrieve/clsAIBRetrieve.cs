@@ -67,7 +67,8 @@ namespace aibRetrieve
         public string[] sArrChallenge = new string[3];
 
         static string HTTP_METHOD_POST = "POST";
-        static string AIB_LOGIN = "https://aibinternetbanking.aib.ie/inet/roi/login.htm";
+        //static string AIB_LOGIN = "https://aibinternetbanking.aib.ie/inet/roi/login.htm";
+        static string AIB_LOGIN = "https://onlinebanking.aib.ie/inet/roi/login.htm";
         static string AIB_POST_FIRST = "_target1=true&jsEnabled=TRUE&regNumber=!regnumber!&transactionToken=";
         static string TRANS_TOKEN = "transactionToken=";
         static string AIB_POST_TWO = "&pacDetails.pacDigit1=1&pacDetails.pacDigit2=5&pacDetails.pacDigit3=2&challengeDetails.challengeEntered=6404&_finish=true";
@@ -196,6 +197,12 @@ namespace aibRetrieve
         public bool AIBFirstChallenge(string sRegNumber)
         {
             RequestPage(AIB_LOGIN, AIB_POST_FIRST.Replace("!regnumber!",sRegNumber) + sToken(htmlResult), HTTP_METHOD_POST);
+            return true;
+        }
+
+        public bool AIBPINChallenge()
+        {
+            RequestPage(AIB_LOGIN, sAIB_PIN_CHALLENGE(htmlResult), HTTP_METHOD_POST);
             return true;
         }
 
@@ -565,11 +572,40 @@ namespace aibRetrieve
 
             string sChallenge = "";
 
-            int.TryParse(htmlResult.Substring(htmlResult.IndexOf("/", htmlResult.IndexOf(@"for=""digit1""><")) - 2, 1), out sDigit1);
-            int.TryParse(htmlResult.Substring(htmlResult.IndexOf("/", htmlResult.IndexOf(@"for=""digit2""><")) - 2, 1), out sDigit2);
-            int.TryParse(htmlResult.Substring(htmlResult.IndexOf("/", htmlResult.IndexOf(@"for=""digit3""><")) - 2, 1), out sDigit3);
+            int.TryParse(htmlResult.Substring(htmlResult.IndexOf("/", htmlResult.IndexOf(@"for=""digit1Text""><")) - 2, 1), out sDigit1);
+            int.TryParse(htmlResult.Substring(htmlResult.IndexOf("/", htmlResult.IndexOf(@"for=""digit2Text""><")) - 2, 1), out sDigit2);
+            int.TryParse(htmlResult.Substring(htmlResult.IndexOf("/", htmlResult.IndexOf(@"for=""digit3Text""><")) - 2, 1), out sDigit3);
 
-            sChallenge = htmlResult.Substring(htmlResult.IndexOf("/", htmlResult.IndexOf(@"for=""challenge"">")) - 25, 69).Replace("<strong>", "").Replace("</strong>", "");
+            sChallenge = htmlResult.Substring(htmlResult.IndexOf("/", htmlResult.IndexOf(@"for=""challengeText"">")) - 25, 69).Replace("<strong>", "").Replace("</strong>", "");
+
+            AIB_CHALLENGE_POST = AIB_CHALLENGE_POST.Replace("!pac1!", sPassKey[sDigit1 - 1]).Replace("!pac2!", sPassKey[sDigit2 - 1]).Replace("!pac3!", sPassKey[sDigit3 - 1]);
+
+            for (int i = 0; i < 3; i++)
+            {
+                if (sChallenge.ToLower().Contains(sArrChallenge[i].ToString().Substring(5, 4)))
+                    AIB_CHALLENGE_POST = AIB_CHALLENGE_POST.Replace("!challenge!", sArrChallenge[i].ToString().Substring(0, 4));
+            }
+
+            AIB_CHALLENGE_POST = AIB_CHALLENGE_POST.Replace("!token!", sToken(htmlResult));
+
+            return AIB_CHALLENGE_POST;
+        }
+
+        public string sAIB_PIN_CHALLENGE(string htmlResult)
+        {
+            string AIB_CHALLENGE_POST = "transactionToken=!token!&pacDetails.pacDigit1=!pac1!&pacDetails.pacDigit2=!pac2!&pacDetails.pacDigit3=!pac3!";
+
+            int sDigit1 = 0;
+            int sDigit2 = 0;
+            int sDigit3 = 0;
+
+            string sChallenge = "";
+
+            int.TryParse(htmlResult.Substring(htmlResult.IndexOf("/", htmlResult.IndexOf(@"for=""digit1Text""><")) - 2, 1), out sDigit1);
+            int.TryParse(htmlResult.Substring(htmlResult.IndexOf("/", htmlResult.IndexOf(@"for=""digit2Text""><")) - 2, 1), out sDigit2);
+            int.TryParse(htmlResult.Substring(htmlResult.IndexOf("/", htmlResult.IndexOf(@"for=""digit3Text""><")) - 2, 1), out sDigit3);
+
+            //sChallenge = htmlResult.Substring(htmlResult.IndexOf("/", htmlResult.IndexOf(@"for=""challenge"">")) - 25, 69).Replace("<strong>", "").Replace("</strong>", "");
 
             AIB_CHALLENGE_POST = AIB_CHALLENGE_POST.Replace("!pac1!", sPassKey[sDigit1 - 1]).Replace("!pac2!", sPassKey[sDigit2 - 1]).Replace("!pac3!", sPassKey[sDigit3 - 1]);
 
@@ -583,6 +619,7 @@ namespace aibRetrieve
 
             return AIB_CHALLENGE_POST;
         }
+
 
         public string ReadResponseStream(HttpWebResponse response)
         {

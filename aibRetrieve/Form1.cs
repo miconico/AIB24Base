@@ -40,6 +40,9 @@ namespace aibRetrieve
             AIB24.AIBFirstChallenge("25087845");
 
             // post the challenge screen
+            AIB24.AIBPINChallenge();
+
+            // post the challenge screen
             AIB24.AIBLastChallenge();
 
             // retrieve the sSMS style account data
