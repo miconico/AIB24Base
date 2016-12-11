@@ -71,13 +71,14 @@ namespace aibRetrieve
         static string AIB_LOGIN = "https://onlinebanking.aib.ie/inet/roi/login.htm";
         static string AIB_POST_FIRST = "_target1=true&jsEnabled=TRUE&regNumber=!regnumber!&transactionToken=";
         static string TRANS_TOKEN = "transactionToken=";
-        static string AIB_POST_TWO = "&pacDetails.pacDigit1=1&pacDetails.pacDigit2=5&pacDetails.pacDigit3=2&challengeDetails.challengeEntered=6404&_finish=true";
-
+        static string AIB_POST_TWO = "jsEnabled=TRUE&transactionToken=&pacDetails.pacDigit1=1&pacDetails.pacDigit2=5&pacDetails.pacDigit3=2&challengeDetails.challengeEntered=6404&_finish=true";
+                                      
         static string AIB_EXPAND_ACC = "https://aibinternetbanking.aib.ie/inet/roi/accountoverview.htm";
         static string AIB_EXPAND_POST = "&iBankFormSubmission=true&dsAccountListIndex=0&nonDSIndex=0";
         static string AIB_FULL_EXPAND = "https://aibinternetbanking.aib.ie/inet/roi/statement.htm";
         static string AIB_FULL_EXPAND_POST = "&index=0&viewAllRecentTransactions=view+all+recent+transactions";
-        static string AIB_LOGOUT = "https://aibinternetbanking.aib.ie/inet/roi/statement.htm";
+        static string AIB_STATEMENT = "https://aibinternetbanking.aib.ie/inet/roi/statement.htm";
+        static string AIB_LOGOUT = "https://onlinebanking.aib.ie/inet/roi/logout.htm";
 
         public String BaseUrl { get; set; }
         public String LastUrl { get; set; }
@@ -226,7 +227,7 @@ namespace aibRetrieve
 
         public bool AIBLogout()
         {
-            RequestPage(AIB_LOGOUT, TRANS_TOKEN + sToken(htmlResult) + AIB_FULL_EXPAND_POST, HTTP_METHOD_POST);
+            RequestPage(AIB_LOGOUT, TRANS_TOKEN + sToken(htmlResult), HTTP_METHOD_POST);
             return true;
         }   
 
@@ -523,13 +524,13 @@ namespace aibRetrieve
                 while (sParseHTML.Contains("<span>"))
                 {
                     //addAccounts.add        
-                    sSpanData = sParseHTML.Substring(sParseHTML.IndexOf("<span>") + 6, (sParseHTML.IndexOf("</span>") - sParseHTML.IndexOf("<span>") - 6));
+                    sSpanData = sParseHTML.Substring(sParseHTML.IndexOf("<span>") + 6, (sParseHTML.IndexOf(@"</span>", sParseHTML.IndexOf(@"<span>"))) - sParseHTML.IndexOf("<span>") - 6);
                     
                     if (sSpanData.Contains("-"))
                     {
                         int iStartPoint = sParseHTML.IndexOf(sSpanData);
-                        string sBalance = sParseHTML.Substring(sParseHTML.IndexOf("<h3>", iStartPoint) + 4, (sParseHTML.IndexOf("</h3>", iStartPoint) - sParseHTML.IndexOf("<h3>", iStartPoint) - 4)).Replace("\t", "").Replace("\r", "").Replace("\n", "").Replace("&nbsp;", "");
-                        sBalance = sBalance.Replace("&nbsp;", "");
+                        //string sBalance = sParseHTML.Substring(sParseHTML.IndexOf("<h3>", iStartPoint) + 4, (sParseHTML.IndexOf("</h3>", iStartPoint) - sParseHTML.IndexOf("<h3>", iStartPoint) - 4)).Replace("\t", "").Replace("\r", "").Replace("\n", "").Replace("&nbsp;", "");
+                        string sBalance = sParseHTML.Substring(sParseHTML.IndexOf(@"<em>", iStartPoint), 100).Replace(" ", "").Replace("\n\t", "").Replace("<em>", "");
                         if (sBalance.ToUpper().Contains("DR"))
                             sBalance = "-" + sBalance.Replace("DR", "");
 
@@ -544,7 +545,7 @@ namespace aibRetrieve
                                 sSMS += sSpanData + ":" + sBalance + Environment.NewLine;//%0A line break in SMS
                         }
                       }
-                    sParseHTML = sParseHTML.Replace(sParseHTML.Substring(sParseHTML.IndexOf("<span>"), (sParseHTML.IndexOf("</span>") - sParseHTML.IndexOf("<span>")) + 7), "");
+                    sParseHTML = sParseHTML.Replace(sParseHTML.Substring(sParseHTML.IndexOf("<span>"), sParseHTML.IndexOf("<span>", sParseHTML.IndexOf("<span>") + 6) - sParseHTML.IndexOf("<span>")), "");
                 }
             }
             catch (Exception ex)
@@ -576,7 +577,10 @@ namespace aibRetrieve
             int.TryParse(htmlResult.Substring(htmlResult.IndexOf("/", htmlResult.IndexOf(@"for=""digit2Text""><")) - 2, 1), out sDigit2);
             int.TryParse(htmlResult.Substring(htmlResult.IndexOf("/", htmlResult.IndexOf(@"for=""digit3Text""><")) - 2, 1), out sDigit3);
 
-            sChallenge = htmlResult.Substring(htmlResult.IndexOf("/", htmlResult.IndexOf(@"for=""challengeText"">")) - 25, 69).Replace("<strong>", "").Replace("</strong>", "");
+            if (htmlResult.IndexOf(@"for=""challengeText"">")!=-1)
+            {
+                sChallenge = htmlResult.Substring(htmlResult.IndexOf("/", htmlResult.IndexOf(@"for=""challengeText"">")) - 25, 69).Replace("<strong>", "").Replace("</strong>", "");
+            }
 
             AIB_CHALLENGE_POST = AIB_CHALLENGE_POST.Replace("!pac1!", sPassKey[sDigit1 - 1]).Replace("!pac2!", sPassKey[sDigit2 - 1]).Replace("!pac3!", sPassKey[sDigit3 - 1]);
 
@@ -586,14 +590,17 @@ namespace aibRetrieve
                     AIB_CHALLENGE_POST = AIB_CHALLENGE_POST.Replace("!challenge!", sArrChallenge[i].ToString().Substring(0, 4));
             }
 
-            AIB_CHALLENGE_POST = AIB_CHALLENGE_POST.Replace("!token!", sToken(htmlResult));
-
+            
+                AIB_CHALLENGE_POST = AIB_CHALLENGE_POST.Replace("!token!", sToken(htmlResult));
+            
+            
             return AIB_CHALLENGE_POST;
         }
 
         public string sAIB_PIN_CHALLENGE(string htmlResult)
         {
-            string AIB_CHALLENGE_POST = "transactionToken=!token!&pacDetails.pacDigit1=!pac1!&pacDetails.pacDigit2=!pac2!&pacDetails.pacDigit3=!pac3!";
+            //string AIB_CHALLENGE_POST = "transactionToken=!token!&pacDetails.pacDigit1=!pac1!&pacDetails.pacDigit2=!pac2!&pacDetails.pacDigit3=!pac3!";
+            string AIB_CHALLENGE_POST = "jsEnabled=TRUE&transactionToken=!token!&pacDetails.pacDigit1=!pac1!&pacDetails.pacDigit2=!pac2!&pacDetails.pacDigit3=!pac3!&_finish=true";
 
             int sDigit1 = 0;
             int sDigit2 = 0;
@@ -605,14 +612,17 @@ namespace aibRetrieve
             int.TryParse(htmlResult.Substring(htmlResult.IndexOf("/", htmlResult.IndexOf(@"for=""digit2Text""><")) - 2, 1), out sDigit2);
             int.TryParse(htmlResult.Substring(htmlResult.IndexOf("/", htmlResult.IndexOf(@"for=""digit3Text""><")) - 2, 1), out sDigit3);
 
-            //sChallenge = htmlResult.Substring(htmlResult.IndexOf("/", htmlResult.IndexOf(@"for=""challenge"">")) - 25, 69).Replace("<strong>", "").Replace("</strong>", "");
+            if (htmlResult.IndexOf(@"for=""challengeText"">") != -1)
+            {
+                sChallenge = htmlResult.Substring(htmlResult.IndexOf("/", htmlResult.IndexOf(@"for=""challengeText"">")) - 25, 69).Replace("<strong>", "").Replace("</strong>", "");
+            }
 
             AIB_CHALLENGE_POST = AIB_CHALLENGE_POST.Replace("!pac1!", sPassKey[sDigit1 - 1]).Replace("!pac2!", sPassKey[sDigit2 - 1]).Replace("!pac3!", sPassKey[sDigit3 - 1]);
 
             for (int i = 0; i < 3; i++)
             {
-                if (sChallenge.Contains(sArrChallenge[i].ToString().Substring(5, 4)))
-                    AIB_CHALLENGE_POST = AIB_CHALLENGE_POST.Replace("!challenge!", sArrChallenge[i].ToString().Substring(0, 4));
+                if (sChallenge.ToLower().Contains(sArrChallenge[i].ToString().Substring(5, 4)))
+                    AIB_CHALLENGE_POST = AIB_CHALLENGE_POST + "&challengeDetails.challengeEntered=!challenge!".Replace("!challenge!", sArrChallenge[i].ToString().Substring(0, 4));
             }
 
             AIB_CHALLENGE_POST = AIB_CHALLENGE_POST.Replace("!token!", sToken(htmlResult));

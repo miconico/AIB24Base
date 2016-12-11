@@ -25,13 +25,15 @@ namespace aibRetrieve
         {            
             AIBWebSession AIB24 = new AIBWebSession();
 
-            string[] sPassKey = new string[5] { "5", "2", "1", "1", "2" };
+            string[] sPassKey = new string[5] { "2", "7", "1", "0", "8" };
             string[] sArrChallenge = new string[3] { "6404-home", "6539-work", "4001-primary" };
             string sSMS = "";
 
             // pass in security details
             AIB24.sPassKey = sPassKey;
             AIB24.sArrChallenge = sArrChallenge;
+
+            sSMS = AIB24.htmlResult;
 
             // create the session
             AIB24.AIBInitLogon();
@@ -43,13 +45,13 @@ namespace aibRetrieve
             AIB24.AIBPINChallenge();
 
             // post the challenge screen
-            AIB24.AIBLastChallenge();
+            //AIB24.AIBLastChallenge();
 
             // retrieve the sSMS style account data
             sSMS = "Marks Accounts" + Environment.NewLine + Environment.NewLine + AIB24.sParseAccountSMS();            
             
             // do a full expand on main account with all data
-            AIB24.AIBFullExpandACC();
+            //AIB24.AIBFullExpandACC();
             
             // parse the acc data HTML
             sSMS += Environment.NewLine + AIB24.sParseAccTrans();
@@ -65,12 +67,12 @@ namespace aibRetrieve
             AIB24.AIBInitLogon();
             AIB24.AIBFirstChallenge("56505148");
             AIB24.AIBLastChallenge();
-            AIB24.AIBExpandACC();
+            //AIB24.AIBExpandACC();
 
             sSMS += Environment.NewLine + "Sandees Accounts" + Environment.NewLine + Environment.NewLine + AIB24.sParseAccountSMS() + Environment.NewLine;
             
             // do a full expand on main account with all data
-            AIB24.AIBFullExpandACC();
+            //AIB24.AIBFullExpandACC();
 
             // parse the acc data HTML
             sSMS += AIB24.sParseAccTrans();
@@ -78,7 +80,7 @@ namespace aibRetrieve
             string sSpend = AIB24.sGetSpend(sSMS);
 
             // send email with compiled data
-            SendEmail.SendMessage("Budget", sSpend + Environment.NewLine + Environment.NewLine + sSMS, "budget@aviva.ie", "miconico@gmail.com;mark.gavin@aviva.ie", "");
+            SendEmail.SendMessage("Budget", sSpend + Environment.NewLine + Environment.NewLine + sSMS, "budget@aviva.ie", "miconico@gmail.com;mark.gavin@aviva.ie;sandeejean@gmail.com", "");
 
             // Logout of AIB24
             AIB24.AIBLogout();
